@@ -120,7 +120,7 @@ extent_zx = [0, Lz * 1e6, -Lx / 2 * 1e6, Lx / 2 * 1e6]
 
 # Siyah zemin üzerine beyaz ışık (cmap='gray')
 im1 = ax1.imshow(
-    xz_profile.T, extent=extent_zx, aspect="auto", cmap="gray", origin="lower" 
+    xz_profile.T, extent=extent_zx, aspect="auto", cmap="inferno", origin="lower" 
 )
 
 ax1.set_title(
