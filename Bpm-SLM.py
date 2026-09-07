@@ -1,172 +1,81 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-# =========================================================================
-# 1. PARAMETRELER VE IZGARALAR
-# =========================================================================
-wavelength = 1.0e-6          # 1 mikron dalgaboyu
-k0 = 2 * np.pi / wavelength   # Boşluktaki dalga sayısı
-n0 = 1.0                     # HAVA (n = 1.0)
-k = n0 * k0
-
-Lx = 200.0e-6                # 200 mikron pencere
-Ly = 200.0e-6
-Nx = 256
-Ny = 256
-dx = Lx / Nx
-dy = Ly / Ny
-
-Lz = 1000.0e-6               # 1000 mikron (1 mm) toplam yol
-Nz = 400                     # 400 adım
-dz = Lz / Nz
-
-x = np.linspace(-Lx / 2, Lx / 2, Nx, endpoint=False)
-y = np.linspace(-Ly / 2, Ly / 2, Ny, endpoint=False)
-X, Y = np.meshgrid(x, y)
-R_sq = X**2 + Y**2
-
-# Frekans Izgarası ve ASM Operatörü
-fx = np.fft.fftfreq(Nx, d=dx)
-fy = np.fft.fftfreq(Ny, d=dy)
-FX, FY = np.meshgrid(fx, fy)
-kx = 2 * np.pi * FX
-ky = 2 * np.pi * FY
-k_transverse_sq = kx**2 + ky**2
-
-propagating_mask = k_transverse_sq <= k**2
-kz = np.zeros_like(k_transverse_sq)
-kz[propagating_mask] = np.sqrt(k**2 - k_transverse_sq[propagating_mask])
-H_diffraction = np.exp(1j * kz * dz) * propagating_mask
-
-absorber = np.exp(- (X / (0.85*Lx/2))**20 - (Y / (0.85*Ly/2))**20)
+from matplotlib.colors import LogNorm 
 
 
-# =========================================================================
-# 2. OPTİK ELEMANLARIN TANIMLANMASI (SLM + LENS + DİFÜZÖR)
-# =========================================================================
-# A) SLM: Işığı Yukarı Bükücü Faz Rampası (z = 120 um noktasına koyduk)
-steer_angle = 0.030      # yukarı sapma açısı
-kx_steer = k0 * np.sin(steer_angle)
-phi_slm = kx_steer * X       # SLM piksellerine yüklenen lineer faz rampası
-slm_mask = np.exp(1j * phi_slm)
-z_slm = 120.0e-6
-step_slm = int(z_slm / dz)
+# --- 1. Fiziksel Parametreler ---
+lambda_p = 405e-9      # Pompa dalgaboyu (405 nm)
+lambda_s = 2 * lambda_p  # Signal/Idler dalgaboyu (810 nm)
+L_z = 2e-3             # Kristal kalınlığı (2 mm)
+sigma_p = 100e-6       # Pompa lazeri yarıçapı (100 um)
 
-# B) İNCE LENS: Odak Uzaklığı f = 300 um (z = 350 um noktasına koyduk)
-f_lens = 300.0e-6
-lens_mask = np.exp(-1j * (k0 / (2 * f_lens)) * R_sq)
-z_lens = 350.0e-6
-step_lens = int(z_lens / dz)
+# --- 2. Momentum Izgarası (Momentum Grid) ---
+# Sinc-Gaussian momentumda tanımlı olduğu için önce momentum ızgarasını kuruyoruz.
+k_max = 2.0e6          # rad/m cinsinden maksimum momentum
+N_points = 512         # Sinc saçaklarını net görmek için çözünürlüğü artırdık
+k = np.linspace(-k_max, k_max, N_points)
+dk = k[1] - k[0]       # Momentum adım boyu
+K1, K2 = np.meshgrid(k, k)
 
-# C) GERÇEKÇİ DİFÜZÖR: (z = 650 um noktasına koyduk)
-np.random.seed(42)
-raw_noise = np.random.randn(Ny, Nx)
-sigma_f = 1 / (6.0e-6)
-filter_2d = np.exp(- (FX**2 + FY**2) / (2 * sigma_f**2))
-smooth_phase = np.real(np.fft.ifft2(np.fft.fft2(raw_noise) * filter_2d))
-smooth_phase = (smooth_phase / np.std(smooth_phase)) * 2.2
+# --- 3. Momentum Uzayında Sinc-Gaussian Dalga Fonksiyonu (Denklem 26) ---
+# Sinc terimi argümanı
+sinc_arg = (L_z * lambda_p) / (8 * np.pi) * (K1 - K2)**2
+# numpy'ın gizli pi çarpanını kompanse ediyoruz:
+term_sinc = np.sinc(sinc_arg / np.pi) 
 
-diffuser_mask = np.exp(1j * smooth_phase)
-z_diffuser = 650.0e-6
-step_diffuser = int(z_diffuser / dz)
+# Gaussian terimi
+term_gauss = np.exp(-(sigma_p**2) * (K1 + K2)**2)
 
+# Biphoton Momentum Dalga Fonksiyonu
+psi_k = term_sinc * term_gauss
+psi_k = psi_k / np.sqrt(np.sum(np.abs(psi_k)**2))  # Normalizasyon
+JPD_k = np.abs(psi_k)**2  # Momentum JPD'si
 
-# =========================================================================
-# 3. BAŞLANGIÇ FENERİ
-# =========================================================================
-w0 = 22.0e-6                 # 22 mikron bel yarıçaplı parlak fener
-E = np.exp(-R_sq / (w0**2)).astype(np.complex128)
+# --- 4. 2D IFFT ile Konum Uzayına Geçiş (Near-Field) ---
+# Momentumdan konuma geçmek için Ters Fourier Dönüşümü (IFFT) yapıyoruz.
+psi_x = np.fft.fftshift(np.fft.ifft2(np.fft.ifftshift(psi_k)))
+psi_x = psi_x / np.sqrt(np.sum(np.abs(psi_x)**2))  # Konumda normalizasyon
+JPD_x = np.abs(psi_x)**2  # Konum JPD'si
 
-
-# =========================================================================
-# 4. SİMÜLASYON DÖNGÜSÜ
-# =========================================================================
-xz_profile = np.zeros((Nz, Nx))
-
-print("Simülasyon başladı...")
-for step in range(Nz):
-    # O anki kesiti kaydet
-    xz_profile[step, :] = np.abs(E[Ny // 2, :])**2
-
-    # 1. IŞIK SLM'E ÇARPIYOR:
-    if step == step_slm:
-        E = E * slm_mask
-
-    # 2. IŞIK LENSE ÇARPIYOR:
-    if step == step_lens:
-        E = E * lens_mask
-
-    # 3. IŞIK DİFÜZÖRE ÇARPIYOR:
-    if step == step_diffuser:
-        E = E * diffuser_mask
-
-    # ASM ile Havada Uçuş:
-    E_k = np.fft.fft2(E)
-    E_k = E_k * H_diffraction
-    E = np.fft.ifft2(E_k)
-    E = E * absorber
-
-print("Simülasyon başarıyla tamamlandı!")
+# --- 5. Konum Izgarasının Hesaplanması (Position Grid) ---
+# dx * dk = 2 * pi / N ilişkisinden konum adım boyunu buluyoruz.
+dx = (2 * np.pi) / (N_points * dk)
+x = np.fft.fftshift(np.fft.fftfreq(N_points, d=1/N_points)) * dx
+X1, X2 = np.meshgrid(x, x)
 
 
-# =========================================================================
-# 5. GÖRSELLEŞTİRME (SLM, LENS VE DİFÜZÖRÜN FİZİKSEL ÇİZİMLERİ İLE)
-# =========================================================================
-fig, ax1 = plt.subplots(figsize=(14, 5))
+# --- 7. Görselleştirme (np.log10 ile Kusursuz Çizim) ---
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
 
-extent_zx = [0, Lz * 1e6, -Lx / 2 * 1e6, Lx / 2 * 1e6]
+# Çok küçük değerlerde log(0) hatası almamak için küçük bir epsilon (1e-10) ekliyoruz
+log_JPD_k = np.log10(JPD_k + 1e-10)
+log_JPD_x = np.log10(JPD_x + 1e-10)
 
-input_peak = np.max(xz_profile[0, :])
-scaled_profile = xz_profile.T / input_peak
+# Sol Grafik: Momentum Uzayı (Logaritmik Ölçekli)
+im1 = ax1.pcolormesh(K1 * 1e-6, K2 * 1e-6, log_JPD_k, cmap='jet', shading='auto',
+                     vmin=-6, vmax=log_JPD_k.max()) # -6 ile max arası (yani 1e-6'ya kadar olanları göster)
+fig.colorbar(im1, ax=ax1, label='Log10(Coincidence Probability)')
+ax1.set_xlabel('Signal Momentum $k_s$ ($rad/\mu m$)')
+ax1.set_ylabel('Idler Momentum $k_i$ ($rad/\mu m$)')
+ax1.set_title('Momentum JPD (Log10 Ölçek)')
+ax1.grid(True, linestyle='--', alpha=0.3)
+ax1.set_aspect('equal')
+k_limit = 1.2
+ax1.set_xlim(-k_limit, k_limit)
+ax1.set_ylim(-k_limit, k_limit)
 
-# Fener modunda canlı çizim:
-im1 = ax1.imshow(
-    scaled_profile, extent=extent_zx, aspect="auto", cmap="inferno", origin="lower", vmin=0, vmax=1.8
-)
-
-# -------------------------------------------------------------------------
-# ÇİZİM 1: SLM (Pikselli Altın Çip Aynası)
-# -------------------------------------------------------------------------
-slm_h = 45.0
-slm_w = 7.0
-z_slm_c = z_slm * 1e6
-ax1.fill_betweenx([-slm_h, slm_h], z_slm_c - slm_w/2, z_slm_c + slm_w/2,
-                  color='#ffd700', alpha=0.55, edgecolor='white', linewidth=1.5,
-                  hatch='--', label='SLM (Yukarı Bükücü)')
-
-# -------------------------------------------------------------------------
-# ÇİZİM 2: İNCE LENS (Kavisli Saydam Cam Lens)
-# -------------------------------------------------------------------------
-lens_h = 48.0
-lens_thick = 10.0
-x_curve = np.linspace(-lens_h, lens_h, 100)
-z_lens_c = z_lens * 1e6
-z_left = z_lens_c - lens_thick * (1 - (x_curve / lens_h)**2)
-z_right = z_lens_c + lens_thick * (1 - (x_curve / lens_h)**2)
-
-ax1.fill_betweenx(x_curve, z_left, z_right, color='cyan', alpha=0.45, 
-                  edgecolor='white', linewidth=1.5, label='İnce Lens (f=300 μm)')
-
-# -------------------------------------------------------------------------
-# ÇİZİM 3: DİFÜZÖR (Desenli Buzlu Cam Plaka)
-# -------------------------------------------------------------------------
-diff_h = 55.0
-diff_w = 6.0
-z_diff_c = z_diffuser * 1e6
-ax1.fill_betweenx([-diff_h, diff_h], z_diff_c - diff_w/2, z_diff_c + diff_w/2,
-                  color='magenta', alpha=0.4, edgecolor='white', linewidth=1.2, 
-                  hatch='//', label='Difüzör (Buzlu Cam)')
-
-# -------------------------------------------------------------------------
-# BAŞLIKLAR VE ETİKETLER
-# -------------------------------------------------------------------------
-ax1.set_title("Optik Sistem: SLM (Bükme) ──► Lens (Odaklama) ──► Difüzör (Saçılma)", 
-              fontsize=13, fontweight='bold')
-ax1.set_xlabel("İlerleme Mesafesi z (μm) ──►", fontsize=11)
-ax1.set_ylabel("Enine Konum x (μm)", fontsize=11)
-
-ax1.legend(loc='upper right', facecolor='black', edgecolor='white', labelcolor='white')
-fig.colorbar(im1, ax=ax1, label="Girişe Göre Işık Şiddeti")
+# Sağ Grafik: Konum Uzayı (Logaritmik Ölçekli)
+im2 = ax2.pcolormesh(X1 * 1e6, X2 * 1e6, log_JPD_x, cmap='jet', shading='auto',
+                     vmin=-7, vmax=log_JPD_x.max()) # -7 ile max arası
+fig.colorbar(im2, ax=ax2, label='Log10(Coincidence Probability)')
+ax2.set_xlabel('Signal Position $x_s$ ($\mu m$)')
+ax2.set_ylabel('Idler Position $x_i$ ($\mu m$)')
+ax2.set_title('Position JPD (Log10 Ölçek)')
+ax2.grid(True, linestyle='--', alpha=0.3)
+ax2.set_aspect('equal')
+x_limit = 200
+ax2.set_xlim(-x_limit, x_limit)
+ax2.set_ylim(-x_limit, x_limit)
 
 plt.tight_layout()
 plt.show()
