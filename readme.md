@@ -7,21 +7,21 @@ Bu projede Açısal Spektrum Yöntemi (ASM) ve Split-Step BPM kullanılarak geli
 ### 1. Serbest Uzayda Lazer Yayılımı (`Bpm.py`)
 Gauss lazer demetinin havada doğal kırınımı ve genişlemesi:
 
-![Serbest Uzay Yayılımı](./BPM.png)
+![Serbest Uzay Yayılımı](images/BPM.png)
 
 ---
 
 ### 2. Lens ve Difüzör Modeli (`Bpm-lens-diffuser.py`)
 Lazerin lense çarparak odaklanması ve ardından difüzörden geçerek saçılması:
 
-![Lens ve Difüzör](./BPM-lens-diffusor.png)
+![Lens ve Difüzör](images/BPM-lens-diffusor.png)
 
 ---
 
 ### 3. SLM + Lens + Difüzör Düzeni (`Bpm-SLM.py`)
 Lazerin SLM ile yukarı saptırılması (Beam Steering), lensle toplanması ve difüzörden saçılması:
 
-![SLM Lens ve Difüzör](./BPM-SLM.png)
+![SLM Lens ve Difüzör](images/BPM-SLM.png)
 
 ---
 
@@ -32,7 +32,7 @@ Spontan Parametrik Aşağı Dönüşüm (SPDC) ile üretilen foton çiftlerinin 
 * **Momentum Uzayı ($q_s = -q_i$):** Enine momentum korunumu gereği fotonların zıt yönlerde saçılması (ters korelasyon).
 * **Dolanıklık Ölçütü:** Schmidt sayısı ($K \approx 4.46$) ve Heisenberg sınırını aşan $\Delta(x_s|x_i)\Delta(q_s|q_i) \ll 1/2$ koşullu varyansları ile EPR paradoksunun gösterimi.
 
-![SPDC Double Gaussian](./spdc-doublegaussian.png)
+![SPDC Double Gaussian](images/spdc-doublegaussian.png)
 
 ---
 
@@ -42,4 +42,4 @@ Kristalin sonlu boyutu ($L$) ve fiziksel faz uyumunun $\text{sinc}$ profili ile 
 * **Momentum Uzayı:** $\text{sinc}(\Delta k_z L / 2)$ faz uyumu fonksiyonu kaynaklı salınımlı kırınım halkaları ve yan loblar (side-lobes).
 * **Konum Uzayı (2D-FFT):** İdeal Gaussiyen yerine kırınım etkilerini ve gerçekçi uzaysal korelasyon kuyruklarını içeren konum profili.
 
-![SPDC Sinc-Gauss](./spdc-sincgaussian.png)
+![SPDC Sinc-Gauss](images/spdc-sincgaussian.png)
