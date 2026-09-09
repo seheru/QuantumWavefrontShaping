@@ -126,10 +126,10 @@ print(f"Estimated 2D Schmidt number:  K = {K_numeric_1D**2:.0f} (Paper reports K
 # 8. WAVEFRONT-SHAPING OPTIMIZATION
 # ==============================================================================
 phi_slm    = np.zeros(n_seg)
-target_idx = N // 2 + 25                   # Hedef speckle konumu (~40 um)
+target_idx = N // 2 + 25                   # Hedef speckle momentumu q (~0.2 rad/um)
 sl = slice(target_idx - TARGET_WIN, target_idx + TARGET_WIN + 1)
 
-# Makaledeki sabit idler dedektörü konumu (x_i = 0):
+# Makaledeki sabit idler dedektörü: Uzak alanda optik eksen (q_i = 0):
 mid_idx = N // 2
 
 theta_scan  = np.linspace(0, 2 * np.pi, 6, endpoint=False)
@@ -158,7 +158,7 @@ for it in range(n_iter):
 
     pump_hist.append(pump_target_intensity(phi_slm, target_idx))
     
-    # Makaledeki gibi: Idler x_i = 0'da sabitken sinyal x_s taranır: C[:, mid_idx]
+    # Makaledeki gibi: Idler uzak alanda q_i = 0'da sabitken sinyal q_s taranır: C[:, mid_idx]
     if it % checkpoint == 0 or it == n_iter - 1:
         _, C, _ = simulate(phi_slm)
         coinc_scan = C[:, mid_idx]
@@ -184,37 +184,38 @@ print(f"Correlation coefficient (Pump vs Coincidence speckle): {corr:.2f}")
 # ==============================================================================
 # 9. FIGURES (MAKALEDEKİ DÜZENEKLE BİREBİR AYNI EKSENLER)
 # ==============================================================================
-x_um = x * 1e6
-target_x = x_um[target_idx]
+# Uzak alan momentum ekseni (rad / µm cinsinden):
+q_axis = k * 1e-6
+target_q = q_axis[target_idx]
 
 fig, axs = plt.subplots(2, 2, figsize=(11, 9))
 
 # Sol Üst: Pompa - Önce
-axs[0, 0].plot(x_um, I0 / I0.max(), lw=1.5)
-axs[0, 0].axvline(target_x, color="r", ls="--", lw=1.5, label="Target")
+axs[0, 0].plot(q_axis, I0 / I0.max(), lw=1.5)
+axs[0, 0].axvline(target_q, color="r", ls="--", lw=1.5, label="Target")
 axs[0, 0].set_title("Pump far-field intensity - before")
-axs[0, 0].set_xlabel("x (µm)"); axs[0, 0].set_ylabel("normalized")
+axs[0, 0].set_xlabel(r"$q_p$ (rad/µm)"); axs[0, 0].set_ylabel("normalized")
 axs[0, 0].legend()
 
-# Sağ Üst: Kuantum Çakışma Taraması C(x_s, x_i=0) - Önce
-axs[0, 1].plot(x_um, C0_scan / C0_scan.max(), color="tab:purple", lw=1.5)
-axs[0, 1].axvline(target_x, color="r", ls="--", lw=1.5, label="Target")
-axs[0, 1].set_title("Coincidence scan C(x_s, x_i=0) - before")
-axs[0, 1].set_xlabel("x_s (µm)"); axs[0, 1].set_ylabel("normalized")
+# Sağ Üst: Kuantum Çakışma Taraması C(q_s, q_i=0) - Önce
+axs[0, 1].plot(q_axis, C0_scan / C0_scan.max(), color="tab:purple", lw=1.5)
+axs[0, 1].axvline(target_q, color="r", ls="--", lw=1.5, label="Target")
+axs[0, 1].set_title(r"Coincidence scan $C(q_s, q_i=0)$ - before")
+axs[0, 1].set_xlabel(r"$q_s$ (rad/µm)"); axs[0, 1].set_ylabel("normalized")
 axs[0, 1].legend()
 
 # Sol Alt: Pompa - Sonra (ODAKLANMIŞ)
-axs[1, 0].plot(x_um, I1 / I1.max(), color="tab:orange", lw=1.5)
-axs[1, 0].axvline(target_x, color="r", ls="--", lw=1.5, label="Target")
+axs[1, 0].plot(q_axis, I1 / I1.max(), color="tab:orange", lw=1.5)
+axs[1, 0].axvline(target_q, color="r", ls="--", lw=1.5, label="Target")
 axs[1, 0].set_title(f"Pump far-field intensity - after ({pump_enh:.1f}x at target)")
-axs[1, 0].set_xlabel("x (µm)"); axs[1, 0].set_ylabel("normalized")
+axs[1, 0].set_xlabel(r"$q_p$ (rad/µm)"); axs[1, 0].set_ylabel("normalized")
 axs[1, 0].legend()
 
-# Sağ Alt: Kuantum Çakışma Taraması C(x_s, x_i=0) - Sonra (RECOVERED)
-axs[1, 1].plot(x_um, C1_scan / C1_scan.max(), color="tab:red", lw=1.5)
-axs[1, 1].axvline(target_x, color="r", ls="--", lw=1.5, label="Target")
-axs[1, 1].set_title(f"Coincidence scan - after ({coinc_enh:.1f}x at target)")
-axs[1, 1].set_xlabel("x_s (µm)"); axs[1, 1].set_ylabel("normalized")
+# Sağ Alt: Kuantum Çakışma Taraması C(q_s, q_i=0) - Sonra (RECOVERED)
+axs[1, 1].plot(q_axis, C1_scan / C1_scan.max(), color="tab:red", lw=1.5)
+axs[1, 1].axvline(target_q, color="r", ls="--", lw=1.5, label="Target")
+axs[1, 1].set_title(r"Coincidence scan $C(q_s, q_i=0)$ - after " + f"({coinc_enh:.1f}x at target)")
+axs[1, 1].set_xlabel(r"$q_s$ (rad/µm)"); axs[1, 1].set_ylabel("normalized")
 axs[1, 1].legend()
 
 plt.tight_layout()
