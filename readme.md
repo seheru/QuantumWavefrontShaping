@@ -51,6 +51,8 @@ Kristalin sonlu boyutu ($L$) ve fiziksel faz uyumunun $\text{sinc}$ profili ile 
 
 Bu nihai aşamada, önceki tüm SPDC ve BPM modelleri birleştirilerek, saçıcı bir ortamdan (difüzör) geçen dolaşık foton çiftlerinin uzaysal korelasyonları, **kuantum sinyaline hiç dokunulmadan**, sadece klasik pompa lazerinin dalga cephesi şekillendirilerek (SLM) ve klasik şiddet geri beslemesiyle gerçek zamanlı olarak geri kazanılmıştır.
 
+![Quantum Wavefront Shaping](images/bpm-wavefront-shaping-xz.png)
+
 #### Fiziksel Mekanizma ve İlkeler:
 * **Yüksek Schmidt Sayısı Rejimi ($K \approx 680$):** Kristal çıkışında foton çiftleri mikroskobik olarak aynı noktada doğar ($r_s \approx r_i$).
 * **Speckle Özdeşliği ($\lambda_p = \lambda_s / 2$):** Dolaşık fotonlar ($\lambda_s = 808\text{ nm}$) difüzörden geçerken toplamda $2\phi_d$ fazı biriktirir. Pompa lazeri ($\lambda_p = 404\text{ nm}$) tam yarım dalgaboyuna sahip olduğundan difüzörden geçerken o da tam $2\phi_d$ fazı biriktirir. Sonuç olarak, uzak alanda klasik pompa speckle deseni ile iki-foton çakışma deseni ($C(x_s, x_i=0)$) birebir özdeşleşir ($r \approx 0.85$).
