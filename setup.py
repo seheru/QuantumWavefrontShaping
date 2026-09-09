@@ -1,19 +1,3 @@
-"""
-================================================================================
- Quantum wavefront shaping simulation
- Reproduces the physics of:
-   O. Lib, G. Hasson, Y. Bromberg,
-   "Real-time shaping of entangled photons by classical control and feedback",
-   Sci. Adv. 6, eabb6298 (2020).
-
- Makale Deney Düzeneği Birebir Eşlemesi:
-   - Dedektör 1 (Idler) optik eksende SABİT tutulur (x_i = 0).
-   - Dedektör 2 (Signal) eksen boyunca taranır (x_s).
-   - Bu sayede C(x_s, x_i=0) doğrudan I_pump(x) profiline eşitlenir (Denklem 2).
-   - Difüzör faz derinliği makaledeki gibi tam gelişmiş speckle (balistiksiz) üretir.
-================================================================================
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 
