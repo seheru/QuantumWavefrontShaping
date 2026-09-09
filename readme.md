@@ -55,7 +55,7 @@ Bu nihai aşamada, önceki tüm SPDC ve BPM modelleri birleştirilerek, saçıc�
 
 #### Fiziksel Mekanizma ve İlkeler:
 * **Yüksek Schmidt Sayısı Rejimi ($K \approx 680$):** Kristal çıkışında foton çiftleri mikroskobik olarak aynı noktada doğar ($r_s \approx r_i$).
-* **Speckle Özdeşliği ($\lambda_p = \lambda_s / 2$):** Dolaşık fotonlar ($\lambda_s = 808\text{ nm}$) difüzörden geçerken toplamda $2\phi_d$ fazı biriktirir. Pompa lazeri ($\lambda_p = 404\text{ nm}$) tam yarım dalgaboyuna sahip olduğundan difüzörden geçerken o da tam $2\phi_d$ fazı biriktirir. Sonuç olarak, uzak alanda klasik pompa speckle deseni ile iki-foton çakışma deseni ($C(x_s, x_i=0)$) birebir özdeşleşir ($r \approx 0.85$).
+* **Speckle Özdeşliği ($\lambda_p = \lambda_s / 2$):** Dolaşık fotonlar ($\lambda_s = 808\text{ nm}$) difüzörden geçerken toplamda $2\phi_d$ fazı biriktirir. Pompa lazeri ($\lambda_p = 404\text{ nm}$) tam yarım dalgaboyuna sahip olduğundan difüzörden geçerken o da tam $2\phi_d$ fazı biriktirir. Sonuç olarak, uzak alanda klasik pompa speckle deseni ile iki-foton çakışma deseni birebir özdeşleşir ($r \approx 0.85$).
 * **Hızlı Klasik Geri Besleme (Wavefront Shaping):** Zayıf ve gürültülü kuantum çakışma sinyali yerine, hedef koordinattaki parlak klasik pompa lazerinin şiddeti okunarak Partitioning Algoritması ile SLM fazları optimize edilmiştir.
 
 ---
