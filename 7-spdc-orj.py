@@ -274,3 +274,7 @@ plt.ylabel("k_{x,s} (arb.)")
 plt.title("Momentum-Momentum Correlation\nG2(kxs, kxi) at kys=kyi=0")
 
 plt.colorbar()
+
+plt.tight_layout()
+
+plt.show()
